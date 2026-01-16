@@ -1,0 +1,3 @@
+streamlit
+pandas
+mysql-connector-python  # Kept in case we need it, but app now uses sqlite3 (built-in)
