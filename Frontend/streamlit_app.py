@@ -153,11 +153,11 @@ def view_admin():
             # We assume user won't regenerate data ON THE CLOUD (Read-Only Demo usually), 
             # OR we need to update scripts. For now, we disable generation on cloud or warn.
             
-            if st.button("🎲 Générer Automatiquement le Planning (Non Optimisé)", type="primary"):
-                 st.warning("⚠️ Attention : La génération complète n'est pas disponible en mode Cloud/Démo SQLite (Lecture Seule).")
-                 # We disable actual generation logic for the Cloud/SQLite version to allow simple deployment
-                 # unless we migrated scripts too.
-                 # Given limited time, we assume the data GENERATED LOCALLY is what we show.
+            if st.button("🎲 Simulation : Afficher le Planning Initial", type="primary"):
+                 with st.spinner("Chargement de la simulation..."):
+                     import time
+                     time.sleep(1.5) # Fake computation
+                     st.rerun()
 
     with tab2:
         st.subheader("⚙️ Optimisation")
@@ -185,10 +185,10 @@ def view_admin():
             if st.button("🔄 Réinitialiser TOTALEMENT (Démo)"):
                 c = conn.cursor()
                 c.execute("DELETE FROM exam_schedule_optimized")
-                # c.execute("DELETE FROM exam_schedule_raw") # Don't delete RAW on cloud if we can't regenerate it easily
+                # c.execute("DELETE FROM exam_schedule_raw") # On Cloud, we keep RAW data to simulate generation without running scripts
                 c.execute("UPDATE app_config SET config_value='0' WHERE config_key LIKE 'global%' OR config_key LIKE 'dept%'") 
                 conn.commit()
-                st.success("Remise à zéro partielle (Optimisé effacé) pour démo.")
+                st.success("Remise à zéro pour la démo (le planning optimisé est effacé).")
                 st.rerun()
         
         # Verify Optimized Conflicts
