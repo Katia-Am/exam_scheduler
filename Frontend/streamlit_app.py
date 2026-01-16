@@ -119,9 +119,19 @@ def view_admin():
     # --- TABS FOR WORKFLOW ---
     tab1, tab2, tab3 = st.tabs(["1. Planning Initial & Conflits", "2. Optimisation", "3. Publication"])
     
+    # --- SESSION STATE FOR DEMO MATCHING ---
+    if "show_raw" not in st.session_state:
+        # If data exists but we haven't clicked "Generate" in this session, hide it for the demo effect
+        st.session_state.show_raw = False
+    
+    # Check if we should really show it
+    # We show it IF (Data Exists AND User Clicked Show) OR (Data Exists AND Optimized is already there - implying we passed step 1)
+    should_show_raw = (count_raw > 0 and st.session_state.show_raw) or (count_raw > 0 and count_opt > 0)
+
     with tab1:
         st.subheader("📋 Planning Initial (Brut)")
-        if count_raw > 0:
+        
+        if should_show_raw:
             st.info(f"✅ Planning initial généré ({count_raw} examens). Contient des conflits.")
             
             # SHOW CONFLICTS FOR RAW
@@ -145,18 +155,15 @@ def view_admin():
             show_conflicts_raw()
             
         else:
-            st.warning("⚠️ Aucun planning initial. Le système est vide.")
+            # Hide data to simulate "Empty System"
+            st.warning("⚠️ Aucun planning initial. Le système est vide (Simulation).")
             st.markdown("### 1️⃣ Étape 1 : Génération du Planning Initial")
             
-            # NOTE: On Cloud, we cannot run subprocesses like this easily if they interact with DB without connection changes.
-            # But for "Deployment Ready" code using SQLite, the scripts ALSO need to use SQLite.
-            # We assume user won't regenerate data ON THE CLOUD (Read-Only Demo usually), 
-            # OR we need to update scripts. For now, we disable generation on cloud or warn.
-            
             if st.button("🎲 Simulation : Afficher le Planning Initial", type="primary"):
-                 with st.spinner("Chargement de la simulation..."):
+                 with st.spinner("Génération du planning (Simulation des conflits)..."):
                      import time
-                     time.sleep(1.5) # Fake computation
+                     time.sleep(1.5)
+                     st.session_state.show_raw = True
                      st.rerun()
 
     with tab2:
@@ -188,6 +195,7 @@ def view_admin():
                 # c.execute("DELETE FROM exam_schedule_raw") # On Cloud, we keep RAW data to simulate generation without running scripts
                 c.execute("UPDATE app_config SET config_value='0' WHERE config_key LIKE 'global%' OR config_key LIKE 'dept%'") 
                 conn.commit()
+                st.session_state.show_raw = False # Hide raw again for demo loop
                 st.success("Remise à zéro pour la démo (le planning optimisé est effacé).")
                 st.rerun()
         
