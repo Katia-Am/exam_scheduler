@@ -47,12 +47,10 @@ def set_config(key, value):
     if not conn: return
     try:
         cur = conn.cursor()
-        # SQLite Upsert
-        cur.execute("""
-            INSERT INTO app_config (config_key, config_value) 
-            VALUES (?, ?)
-            ON CONFLICT(config_key) DO UPDATE SET config_value = excluded.config_value
-        """, (key, value))
+        # Explicit Upsert (Safer if PK is missing in SQLite migration)
+        cur.execute("UPDATE app_config SET config_value = ? WHERE config_key = ?", (value, key))
+        if cur.rowcount == 0:
+             cur.execute("INSERT INTO app_config (config_key, config_value) VALUES (?, ?)", (key, value))
         conn.commit()
     finally:
         conn.close()
@@ -159,12 +157,25 @@ def view_admin():
             st.warning("⚠️ Aucun planning initial. Le système est vide (Simulation).")
             st.markdown("### 1️⃣ Étape 1 : Génération du Planning Initial")
             
-            if st.button("🎲 Simulation : Afficher le Planning Initial", type="primary"):
-                 with st.spinner("Génération du planning (Simulation des conflits)..."):
-                     import time
-                     time.sleep(1.5)
-                     st.session_state.show_raw = True
-                     st.rerun()
+            if count_raw == 0:
+                st.warning("⚠️ Base de données vide. Veuillez générer le planning (Local uniquement).")
+                if st.button("🛠️ Générer Planning (Exécuter Script)", type="secondary"):
+                     with st.spinner("Exécution du script generate_raw_schedule.py..."):
+                         try:
+                             subprocess.run([sys.executable, str(SCRIPT_RAW)], check=True)
+                             st.session_state.show_raw = True
+                             st.rerun()
+                         except Exception as e:
+                             st.error(f"Erreur exécution script : {e}")
+            else:
+                # Data exists, but hidden for demo
+                st.info("Le système est prêt pour la démo (Données chargées).")
+                if st.button("🎲 Simulation : Afficher le Planning Initial", type="primary"):
+                     with st.spinner("Génération du planning (Simulation des conflits)..."):
+                         import time
+                         time.sleep(1.5)
+                         st.session_state.show_raw = True
+                         st.rerun()
 
     with tab2:
         st.subheader("⚙️ Optimisation")
@@ -178,16 +189,28 @@ def view_admin():
                 st.warning("En attente d'optimisation.")
 
         with c2:
-            if st.button("🚀 Lancer l'Algorithme d'Optimisation"):
-                # Same here: Optimization script uses MySQL connector. 
-                # For the demo, we likely want to just SHOW the result we already calculated locally.
-                # So we won't run the script, we just say "Optimization Done" (Mock) if data exists.
-                if count_opt > 0:
-                     st.success("Optimisation (simulée pour Cloud) terminée !")
-                     set_config("optimized_flag", "1")
-                     st.rerun()
-                else:
-                     st.error("Impossible de lancer l'optimisation en mode Cloud sans scripts adaptés.")
+            # LOGIC FOR LOCAL GENERATION vs CLOUD SIMULATION
+            if count_opt == 0:
+                # Local Mode: We need to run the script to create date
+                if st.button("🚀 Lancer l'Algorithme (Script Local)"):
+                     with st.spinner("Exécution de l'algorithme d'optimisation (Cela peut prendre 10-20s)..."):
+                         try:
+                             # Now that script uses SQLite, we can run it safely locally
+                             subprocess.run([sys.executable, str(SCRIPT_OPTIMIZE)], check=True)
+                             # Reload to see changes
+                             set_config("optimized_flag", "1")
+                             st.rerun()
+                         except Exception as e:
+                             st.error(f"Erreur script : {e}")
+            else:
+                # Data Exists (Cloud or Local Ready)
+                if st.button("🚀 Simulation : Optimisation", type="primary"):
+                     with st.spinner("Optimisation en cours (Simulation)..."):
+                         import time
+                         time.sleep(2.0)
+                         set_config("optimized_flag", "1")
+                         st.success("Optimisation terminée !")
+                         st.rerun()
 
             if st.button("🔄 Réinitialiser TOTALEMENT (Démo)"):
                 c = conn.cursor()
