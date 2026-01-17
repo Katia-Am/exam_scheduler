@@ -154,21 +154,25 @@ def view_admin():
             
         else:
             # Hide data to simulate "Empty System"
-            st.warning("⚠️ Aucun planning initial. Le système est vide (Simulation).")
-            st.markdown("### 1️⃣ Étape 1 : Génération du Planning Initial")
             
             if count_raw == 0:
-                st.warning("⚠️ Base de données vide. Veuillez générer le planning (Local uniquement).")
-                if st.button("🛠️ Générer Planning (Exécuter Script)", type="secondary"):
-                     with st.spinner("Exécution du script generate_raw_schedule.py..."):
-                         try:
-                             subprocess.run([sys.executable, str(SCRIPT_RAW)], check=True)
-                             st.session_state.show_raw = True
-                             st.rerun()
-                         except Exception as e:
-                             st.error(f"Erreur exécution script : {e}")
+                is_cloud = sys.platform.startswith("linux")
+                st.warning("⚠️ Base de données vide.")
+                
+                if is_cloud:
+                     st.error("🔒 MODE CLOUD : Impossible de générer les données ici.")
+                     st.info("💡 Solution : Générez le planning sur votre PC (Local), puis envoyez le fichier 'exam_scheduler.db' sur GitHub.")
+                else:
+                    st.markdown("### 1️⃣ Étape 1 : Génération du Planning Initial")
+                    if st.button("🛠️ Générer Planning (Exécuter Script)", type="secondary"):
+                         with st.spinner("Exécution du script generate_raw_schedule.py..."):
+                             try:
+                                 subprocess.run([sys.executable, str(SCRIPT_RAW)], check=True)
+                                 st.session_state.show_raw = True
+                                 st.rerun()
+                             except Exception as e:
+                                 st.error(f"Erreur exécution script : {e}")
             else:
-                # Data exists, but hidden for demo
                 st.info("Le système est prêt pour la démo (Données chargées).")
                 if st.button("🎲 Simulation : Afficher le Planning Initial", type="primary"):
                      with st.spinner("Génération du planning (Simulation des conflits)..."):
@@ -191,17 +195,24 @@ def view_admin():
         with c2:
             # LOGIC FOR LOCAL GENERATION vs CLOUD SIMULATION
             if count_opt == 0:
-                # Local Mode: We need to run the script to create date
-                if st.button("🚀 Lancer l'Algorithme (Script Local)"):
-                     with st.spinner("Exécution de l'algorithme d'optimisation (Cela peut prendre 10-20s)..."):
-                         try:
-                             # Now that script uses SQLite, we can run it safely locally
-                             subprocess.run([sys.executable, str(SCRIPT_OPTIMIZE)], check=True)
-                             # Reload to see changes
-                             set_config("optimized_flag", "1")
-                             st.rerun()
-                         except Exception as e:
-                             st.error(f"Erreur script : {e}")
+                is_cloud = sys.platform.startswith("linux")
+                
+                if is_cloud:
+                     st.warning("⚠️ Planning Optimisé manquant.")
+                     st.error("🔒 MODE CLOUD : Impossible de lancer l'optimisation ici.")
+                     st.info("💡 Solution : Lancez l'optimisation sur PC (Local), puis envoyez la DB sur GitHub.")
+                else:
+                    # Local Mode: We need to run the script to create date
+                    if st.button("🚀 Lancer l'Algorithme (Script Local)"):
+                         with st.spinner("Exécution de l'algorithme d'optimisation (Cela peut prendre 10-20s)..."):
+                             try:
+                                 # Now that script uses SQLite, we can run it safely locally
+                                 subprocess.run([sys.executable, str(SCRIPT_OPTIMIZE)], check=True)
+                                 # Reload to see changes
+                                 set_config("optimized_flag", "1")
+                                 st.rerun()
+                             except Exception as e:
+                                 st.error(f"Erreur script : {e}")
             else:
                 # Data Exists (Cloud or Local Ready)
                 if st.button("🚀 Simulation : Optimisation", type="primary"):
