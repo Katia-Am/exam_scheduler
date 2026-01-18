@@ -165,7 +165,7 @@ def view_admin():
                      st.info("💡 Solution : Générez le planning sur votre PC (Local), puis envoyez le fichier 'exam_scheduler.db' sur GitHub.")
                 else:
                     st.markdown("### 1️⃣ Étape 1 : Génération du Planning Initial")
-                    if st.button("🛠️ Générer Planning (Exécuter Script)", type="secondary"):
+                    if st.button("🛠️ Générer le Planning Initial", type="secondary"):
                          with st.spinner("Exécution du script generate_raw_schedule.py..."):
                              try:
                                  subprocess.run([sys.executable, str(SCRIPT_RAW)], check=True)
@@ -205,7 +205,7 @@ def view_admin():
                      st.info("💡 Solution : Lancez l'optimisation sur PC (Local), puis envoyez la DB sur GitHub.")
                 else:
                     # Local Mode: We need to run the script to create date
-                    if st.button("🚀 Lancer l'Algorithme (Script Local)"):
+                    if st.button("🚀 Lancer l'Algorithme d'Optimisation"):
                          with st.spinner("Exécution de l'algorithme d'optimisation (Cela peut prendre 10-20s)..."):
                              try:
                                  # Now that script uses SQLite, we can run it safely locally
