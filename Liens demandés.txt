@@ -1,0 +1,6 @@
+● Le lien Youtube de la vidéo qui exeplique notre solution :
+
+
+● Le lien vers la plateforme développée et hébergée enligne :
+
+https://univ-opti-exam-scheduler.streamlit.app/

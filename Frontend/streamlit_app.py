@@ -156,7 +156,8 @@ def view_admin():
             # Hide data to simulate "Empty System"
             
             if count_raw == 0:
-                is_cloud = sys.platform.startswith("linux")
+                # Enable script execution on all platforms
+                is_cloud = False
                 st.warning("⚠️ Base de données vide.")
                 
                 if is_cloud:
@@ -195,7 +196,8 @@ def view_admin():
         with c2:
             # LOGIC FOR LOCAL GENERATION vs CLOUD SIMULATION
             if count_opt == 0:
-                is_cloud = sys.platform.startswith("linux")
+                # Enable script execution on all platforms (including Cloud/Linux)
+                is_cloud = False 
                 
                 if is_cloud:
                      st.warning("⚠️ Planning Optimisé manquant.")

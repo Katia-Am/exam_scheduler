@@ -1,22 +1,21 @@
-import mysql.connector
+import sqlite3
 from datetime import date, timedelta
 import collections
 import sys
+from pathlib import Path
 
 # ---------------- DB ----------------
+BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = BASE_DIR / "exam_scheduler.db"
+
 try:
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="", # Adaptez si besoin
-        database="exam_scheduler"
-    )
+    conn = sqlite3.connect(str(DB_PATH))
     cur = conn.cursor()
 except Exception as e:
     print(f"ERREUR CONNEXION DB: {e}")
     sys.exit(1)
 
-print("Nettoyage du planning optimise...")
+print("Nettoyage du planning optimise (SQLite)...")
 try:
     cur.execute("DELETE FROM exam_schedule_optimized")
     conn.commit()
@@ -120,8 +119,8 @@ for exam in exams_list:
                 cur.execute("""
                     INSERT INTO exam_schedule_optimized
                     (exam_id, prof_id, salle_id, date_exam, time_slot)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (eid, pid, sid, d, slot))
+                    VALUES (?, ?, ?, ?, ?)
+                """, (eid, pid, sid, d.strftime("%Y-%m-%d"), slot))
                 
                 occupied_prof_slot.add((pid, d, slot))
                 occupied_salle_slot.add((sid, d, slot))
@@ -143,7 +142,7 @@ for exam in exams_list:
 
     if not placed:
         unplaced_exams.append(eid)
-        print(f"Impossible de# Placeholder - checking generate_examens.py firstxamen {eid} ({exam['nb_students']} etudiants)")
+        print(f"Impossible de placer examen {eid} ({exam['nb_students']} etudiants)")
 
 conn.commit()
 conn.close()
